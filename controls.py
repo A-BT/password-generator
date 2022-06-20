@@ -59,7 +59,8 @@ def variable_control(variable, variable_type):
 
 def excluded_type_chars_control(type_chars, min_upper, min_lower, min_nb, min_spec_chars):
     """
-        This function checks if the excluded type of characters are correct.
+        This function checks if the excluded type of characters are correct and if the minimum number of characters is 0
+        if the type of characters is not allowed.
 
         A correct excluded type of characters is "A" for upper, "a" for lower letter, "0" for number and "$" for special
         character.
@@ -68,15 +69,23 @@ def excluded_type_chars_control(type_chars, min_upper, min_lower, min_nb, min_sp
 
         :param type_chars: list
             the list with the excludes type of characters
+        :param min_upper: int
+            minimum of upper letters in password
+        :param min_lower: int
+            minimum of lower letters in password
+        :param min_nb: int
+            minimum of numbers in password
+        :param min_spec_chars: int
+            minimum of special chars in password
 
         :return: int
-            the excluded type of characters are allowed (1) or not (0)
+            the excluded type of characters are allowed and the minimums are OK (1) or not (0)
         :return: str
             if control is not OK, it returns an error, else it returns ''
     """
 
     type_chars_allowed = ['A', 'a', '0', '$']
-    dict_type_chars_min_chars = {'A' : min_upper, 'a' : min_lower, '0' : min_nb, '$' : min_spec_chars}
+    dict_type_chars_min_chars = {'A': min_upper, 'a': min_lower, '0': min_nb, '$': min_spec_chars}
 
     # [Check if the excluded type of characters is OK]
     for type_char in type_chars:
