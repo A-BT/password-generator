@@ -57,7 +57,7 @@ def variable_control(variable, variable_type):
     return 1
 
 
-def excluded_type_chars_control(type_chars):
+def excluded_type_chars_control(type_chars, min_upper, min_lower, min_nb, min_spec_chars):
     """
         This function checks if the excluded type of characters are correct.
 
@@ -76,15 +76,21 @@ def excluded_type_chars_control(type_chars):
     """
 
     type_chars_allowed = ['A', 'a', '0', '$']
-
-    # [Check if all type of characters are not excluded]
-    if len(type_chars) ==4:
-        return 0, 'All type of characters can\'t be excluded'
+    dict_type_chars_min_chars = {'A' : min_upper, 'a' : min_lower, '0' : min_nb, '$' : min_spec_chars}
 
     # [Check if the excluded type of characters is OK]
     for type_char in type_chars:
         if type_char not in type_chars_allowed:
             return 0, 'Type chars excluded "' + str(type_char) + '" is not allowed'
+
+    # [Check if all type of characters are not excluded]
+    if len(type_chars) == 4:
+        return 0, 'All type of characters can\'t be excluded'
+
+    for each in type_chars:
+        if dict_type_chars_min_chars.get(each) != 0:
+            return 0, 'It\'s not possible to excluded a type of characters and have a minimum number of characters' \
+                      'different from 0'
 
     return 1, ''
 
@@ -188,7 +194,10 @@ def check_before_generation(generation_mode, length, repetition_allowed, min_upp
 
         # [Check if excluded type of characters is OK]
         if excluded_type_chars != ['']:
-            is_correct_excluded_type_chars, error_message = excluded_type_chars_control(excluded_type_chars)
+            is_correct_excluded_type_chars, error_message = excluded_type_chars_control(excluded_type_chars,
+                                                                                        min_upper_letters,
+                                                                                        min_lower_letters, min_numbers,
+                                                                                        min_special_chars)
         else:
             is_correct_excluded_type_chars = 1
 
