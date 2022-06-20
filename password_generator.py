@@ -33,7 +33,23 @@ def exclude_chars(list_chars, list_excluded_chars):
     return list_chars
 
 
-def generate_lists_chars(mode, min_upper, min_lower, min_nb, min_spec, list_excluded_chars):
+def exclude_type_chars(dict_type, forbidden_type):
+
+    list_list_chars = []  # list with list of chars (example : list with list of upper letters and list of numbers)
+    list_chars_type_excluded = []
+
+    for key in dict_type:
+        if key not in forbidden_type:
+            list_list_chars.append(dict_type.get(key))
+
+    for list_chars in list_list_chars:
+        for char in list_chars:
+            list_chars_type_excluded.append(char)
+
+    return list_chars_type_excluded
+
+
+def generate_lists_chars(mode, min_upper, min_lower, min_nb, min_spec, list_excluded_chars, list_excluded_type_chars):
     """
         This function generates 4 lists :
             - list of upper letters
@@ -66,31 +82,49 @@ def generate_lists_chars(mode, min_upper, min_lower, min_nb, min_spec, list_excl
             list of special chars
     """
 
-    if mode != 'shuffle' or (mode == 'shuffle' and min_upper > 0):
+    if mode != 'shuffle' or (mode == 'shuffle' and 'A' not in list_excluded_type_chars):
         list_upper_letters = list(string.ascii_uppercase)
         list_upper_letters = exclude_chars(list_upper_letters, list_excluded_chars)
     else:
         list_upper_letters = []
 
-    if mode != 'shuffle' or (mode == 'shuffle' and min_lower > 0):
+    if mode != 'shuffle' or (mode == 'shuffle' and 'a' not in list_excluded_type_chars):
         list_lower_letters = list(string.ascii_lowercase)
         list_lower_letters = exclude_chars(list_lower_letters, list_excluded_chars)
     else:
         list_lower_letters = []
 
-    if mode != 'shuffle' or (mode == 'shuffle' and min_nb > 0):
+    if mode != 'shuffle' or (mode == 'shuffle' and '0' not in list_excluded_type_chars):
         list_numbers = list(string.digits)
         list_numbers = exclude_chars(list_numbers, list_excluded_chars)
     else:
         list_numbers = []
 
-    if mode != 'shuffle' or (mode == 'shuffle' and min_spec > 0):
+    if mode != 'shuffle' or (mode == 'shuffle' and '$' not in list_excluded_type_chars):
         list_special_chars = list(string.punctuation)
         list_special_chars = exclude_chars(list_special_chars, list_excluded_chars)
     else:
         list_special_chars = []
 
     return list_upper_letters, list_lower_letters, list_numbers, list_special_chars
+
+
+def generate_list_all_chars(forbidden_chars, forbidden_type_chars):
+    dict_type_chars = {'A': list(string.ascii_uppercase), 'a': list(string.ascii_lowercase), '0': list(string.digits),
+                       '$': list(string.punctuation)}
+
+    # [If forbidden type chars exists]
+    if forbidden_type_chars != ['']:
+        list_chars_after_type_exclusion = exclude_type_chars(dict_type_chars, forbidden_type_chars)
+        list_chars_after_exclusion = exclude_chars(list_chars_after_type_exclusion, forbidden_chars)
+
+    else:
+        list_chars_before_exclusion = list(string.ascii_uppercase) + list(string.ascii_lowercase) + \
+                                      list(string.digits) + list(string.punctuation)
+
+        list_chars_after_exclusion = exclude_chars(list_chars_before_exclusion, forbidden_chars)
+
+    return list_chars_after_exclusion
 
 
 def draw_random(list_chars, passwd, repetition):
@@ -121,6 +155,47 @@ def draw_random(list_chars, passwd, repetition):
     return char
 
 
+def draw_random_list_all_chars(list_chars, difference):
+
+    list_password_chars = []
+
+    i = 0
+    while i < difference:
+        list_password_chars.append(choice(list_chars))
+        i += 1
+
+    return list_password_chars
+
+
+def draw_random_list_each_char_types(min_upper, list_upper, min_lower, list_lower, min_nb, list_nb, min_spec_chars,
+                                     list_spec_chars, list_passwd_chars):
+    if min_upper != 0:
+        i = 0
+        while i < min_upper:
+            list_passwd_chars.append(choice(list_upper))
+            i += 1
+
+    if min_lower != 0:
+        i = 0
+        while i < min_lower:
+            list_passwd_chars.append(choice(list_lower))
+            i += 1
+
+    if min_nb != 0:
+        i = 0
+        while i < min_nb:
+            list_passwd_chars.append(choice(list_nb))
+            i += 1
+
+    if min_spec_chars != 0:
+        i = 0
+        while i < min_spec_chars:
+            list_passwd_chars.append(choice(list_spec_chars))
+            i += 1
+
+    return list_passwd_chars
+
+
 def password_generation(generation_mode, length=1, repetition_allowed=1, min_upper_letters=0, min_lower_letters=0,
                         min_numbers=0, min_special_chars=0, excluded_chars=None, excluded_type_chars=None):
 
@@ -146,7 +221,8 @@ def password_generation(generation_mode, length=1, repetition_allowed=1, min_upp
         # Generate lists of upper and lower letters, list of numbers and list of special chars
         list_upper, list_lower, list_nb, list_spec = generate_lists_chars(generation_mode, min_upper_letters,
                                                                           min_lower_letters, min_numbers,
-                                                                          min_special_chars, excluded_chars)
+                                                                          min_special_chars, excluded_chars,
+                                                                          excluded_type_chars)
 
         for pattern_char in generation_mode:
             if pattern_char == 'A':
@@ -165,17 +241,56 @@ def password_generation(generation_mode, length=1, repetition_allowed=1, min_upp
                 new_char = draw_random(list_spec, password, repetition_allowed)
                 password += new_char
 
-
         return 1, '', password
 
+    # [Shuffle mode]
 
+    sum_min_chars = min_upper_letters + min_lower_letters + min_numbers + min_special_chars
 
+    chars_difference = length - sum_min_chars
 
+    list_password_chars = []
 
+    # No minimum characters
+    if sum_min_chars == 0:
+        # No minimum characters
+        list_all_type_chars = generate_list_all_chars(excluded_chars, excluded_type_chars)
 
+        list_password_chars = draw_random_list_all_chars(list_all_type_chars, chars_difference)
 
+    elif sum_min_chars < length:
+        # Generate lists of upper and lower letters, list of numbers and list of special chars
+        list_upper_letters, list_lower_letters,\
+        list_numbers, list_special_chars = generate_lists_chars(generation_mode, min_upper_letters, min_lower_letters,
+                                                                min_numbers, min_special_chars, excluded_chars,
+                                                                excluded_type_chars)
 
+        list_all_type_chars = generate_list_all_chars(excluded_chars, excluded_type_chars)
 
-    password = 'passwd'
+        list_password_chars = draw_random_list_all_chars(list_all_type_chars, chars_difference)
+
+        list_password_chars = draw_random_list_each_char_types(min_upper_letters, list_upper_letters, min_lower_letters,
+                                                               list_lower_letters, min_numbers, list_numbers,
+                                                               min_special_chars, list_special_chars,
+                                                               list_password_chars)
+
+    else:
+        # Generate lists of upper and lower letters, list of numbers and list of special chars
+        list_upper_letters, list_lower_letters, \
+        list_numbers, list_special_chars = generate_lists_chars(generation_mode, min_upper_letters, min_lower_letters,
+                                                                min_numbers, min_special_chars, excluded_chars,
+                                                                excluded_type_chars)
+
+        list_password_chars = draw_random_list_each_char_types(min_upper_letters, list_upper_letters, min_lower_letters,
+                                                               list_lower_letters, min_numbers, list_numbers,
+                                                               min_special_chars, list_special_chars,
+                                                               list_password_chars)
+
+    password = ''
+
+    while len(list_password_chars) != 0:
+        char = choice(list_password_chars)
+        list_password_chars.remove(char)
+        password += char
 
     return 1, '', password
