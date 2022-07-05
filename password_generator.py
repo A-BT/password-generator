@@ -9,7 +9,7 @@ from secrets import choice  # Choose one of them
 # from random import choice  # Choose one of them
 
 # Import personal modules
-from controls import check_before_generation
+from controls import check_before_generation, check_no_repetition_is_possible
 
 
 # Functions
@@ -34,7 +34,6 @@ def exclude_chars(list_chars, list_excluded_chars):
 
 
 def exclude_type_chars(dict_type, forbidden_type):
-
     list_list_chars = []  # list with list of chars (example : list with list of upper letters and list of numbers)
     list_chars_type_excluded = []
 
@@ -156,7 +155,6 @@ def draw_random(list_chars, passwd, repetition):
 
 
 def draw_random_list_all_chars(list_chars, difference):
-
     list_password_chars = []
 
     i = 0
@@ -198,7 +196,6 @@ def draw_random_list_each_char_types(min_upper, list_upper, min_lower, list_lowe
 
 def password_generation(generation_mode, length=1, repetition_allowed=1, min_upper_letters=0, min_lower_letters=0,
                         min_numbers=0, min_special_chars=0, excluded_chars=None, excluded_type_chars=None):
-
     if excluded_chars is None:
         excluded_chars = ['']
     if excluded_type_chars is None:
@@ -251,45 +248,76 @@ def password_generation(generation_mode, length=1, repetition_allowed=1, min_upp
 
     list_password_chars = []
 
+    draw_random_is_ok = 0
+
     # No minimum characters
     if sum_min_chars == 0:
-        # No minimum characters
-        list_all_type_chars = generate_list_all_chars(excluded_chars, excluded_type_chars)
 
-        list_password_chars = draw_random_list_all_chars(list_all_type_chars, chars_difference)
+        while draw_random_is_ok == 0:
+            list_all_type_chars = generate_list_all_chars(excluded_chars, excluded_type_chars)
+
+            list_password_chars = draw_random_list_all_chars(list_all_type_chars, chars_difference)
+
+            if repetition_allowed == 0:
+                draw_random_is_ok = check_no_repetition_is_possible(list_password_chars)
+            else:
+                draw_random_is_ok = 1
 
     elif sum_min_chars < length:
-        # Generate lists of upper and lower letters, list of numbers and list of special chars
-        list_upper_letters, list_lower_letters,\
-        list_numbers, list_special_chars = generate_lists_chars(generation_mode, min_upper_letters, min_lower_letters,
-                                                                min_numbers, min_special_chars, excluded_chars,
-                                                                excluded_type_chars)
+        while draw_random_is_ok == 0:
+            # Generate lists of upper and lower letters, list of numbers and list of special chars
+            list_upper_letters, list_lower_letters, \
+            list_numbers, list_special_chars = generate_lists_chars(generation_mode, min_upper_letters,
+                                                                    min_lower_letters, min_numbers, min_special_chars,
+                                                                    excluded_chars, excluded_type_chars)
 
-        list_all_type_chars = generate_list_all_chars(excluded_chars, excluded_type_chars)
+            list_all_type_chars = generate_list_all_chars(excluded_chars, excluded_type_chars)
 
-        list_password_chars = draw_random_list_all_chars(list_all_type_chars, chars_difference)
+            list_password_chars = draw_random_list_all_chars(list_all_type_chars, chars_difference)
 
-        list_password_chars = draw_random_list_each_char_types(min_upper_letters, list_upper_letters, min_lower_letters,
-                                                               list_lower_letters, min_numbers, list_numbers,
-                                                               min_special_chars, list_special_chars,
-                                                               list_password_chars)
+            list_password_chars = draw_random_list_each_char_types(min_upper_letters, list_upper_letters,
+                                                                   min_lower_letters, list_lower_letters, min_numbers,
+                                                                   list_numbers, min_special_chars, list_special_chars,
+                                                                   list_password_chars)
+
+            if repetition_allowed == 0:
+                draw_random_is_ok = check_no_repetition_is_possible(list_password_chars)
+            else:
+                draw_random_is_ok = 1
 
     else:
-        # Generate lists of upper and lower letters, list of numbers and list of special chars
-        list_upper_letters, list_lower_letters, \
-        list_numbers, list_special_chars = generate_lists_chars(generation_mode, min_upper_letters, min_lower_letters,
-                                                                min_numbers, min_special_chars, excluded_chars,
-                                                                excluded_type_chars)
+        while draw_random_is_ok == 0:
+            # Generate lists of upper and lower letters, list of numbers and list of special chars
+            list_upper_letters, list_lower_letters, \
+            list_numbers, list_special_chars = generate_lists_chars(generation_mode, min_upper_letters,
+                                                                    min_lower_letters, min_numbers, min_special_chars,
+                                                                    excluded_chars, excluded_type_chars)
 
-        list_password_chars = draw_random_list_each_char_types(min_upper_letters, list_upper_letters, min_lower_letters,
-                                                               list_lower_letters, min_numbers, list_numbers,
-                                                               min_special_chars, list_special_chars,
-                                                               list_password_chars)
+            list_password_chars = draw_random_list_each_char_types(min_upper_letters, list_upper_letters,
+                                                                   min_lower_letters, list_lower_letters, min_numbers,
+                                                                   list_numbers, min_special_chars, list_special_chars,
+                                                                   list_password_chars)
+
+            if repetition_allowed == 0:
+                draw_random_is_ok = check_no_repetition_is_possible(list_password_chars)
+            else:
+                draw_random_is_ok = 1
 
     password = ''
 
     while len(list_password_chars) != 0:
         char = choice(list_password_chars)
+
+        if repetition_allowed == 0 and char == password[-1:]:
+            if len(list_password_chars) > 1:
+                while char == password[-1:]:
+                    char = choice(list_password_chars)
+            else:
+                for password_char in password:
+                    list_password_chars.append(password_char)
+
+                password = ''
+
         list_password_chars.remove(char)
         password += char
 

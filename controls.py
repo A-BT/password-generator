@@ -98,7 +98,7 @@ def excluded_type_chars_control(type_chars, min_upper, min_lower, min_nb, min_sp
 
     for each in type_chars:
         if dict_type_chars_min_chars.get(each) != 0:
-            return 0, 'It\'s not possible to excluded a type of characters and have a minimum number of characters' \
+            return 0, 'It\'s not possible to excluded a type of characters and have a minimum number of characters ' \
                       'different from 0'
 
     return 1, ''
@@ -214,3 +214,20 @@ def check_before_generation(generation_mode, length, repetition_allowed, min_upp
             return 0, error_message
 
         return 1, ''
+
+
+def check_no_repetition_is_possible(list_chars):
+
+    dict_chars = {}
+
+    for char in list_chars:
+        if dict_chars.get(char):
+            dict_chars[char] = dict_chars.get(char) + 1
+        else:
+            dict_chars[char] = 1
+
+    for char in dict_chars:
+        if dict_chars.get(char) > (len(list_chars) / 2):
+            return 0
+        else:
+            return 1
